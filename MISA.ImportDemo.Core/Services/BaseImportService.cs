@@ -474,10 +474,11 @@ namespace MISA.ImportDemo.Core.Services
                     if (position == null)
                     {
                         entity.ImportValidError.Add(string.Format("Chức vụ {0} không tồn tại trong hệ thống", cellValue));
+                        // Khi dữ liệu trong Excel không trùng với dữ liệu trong DB thì để trống
+                        // ModifiedBy MTDUONG(06/06/2021)
                         position = new Position()
                         {
                             PositionId = Guid.NewGuid(),
-                            //PositionName = cellValue.ToString(),
                             OrganizationId = _importRepository.GetCurrentOrganization().OrganizationId,
                         };
                         // Thêm vào danh sách các vị trí sẽ thêm mới:
@@ -643,9 +644,10 @@ namespace MISA.ImportDemo.Core.Services
         /// CreatedBy: NVMANH (25/05/2020)
         protected virtual DateTime? GetProcessDateTimeValue<T>(T entity, object cellValue, Type type, ImportColumn importColumn = null) where T : BaseEntity
         {
-            var maxDate = DateTime.MaxValue;
-            var minDate = DateTime.MinValue;
             DateTime? dateReturn = null;
+            /// Xử lý dữ liệu khi chỉ nhập năm: Năm nhập vào không được lớn hơn 9999 và không được nhỏ hơn 1
+            /// ModifiedBy: MTDUONG(06/06/2021)
+            
             if (cellValue.GetType() == typeof(double))
             {
                 if (Convert.ToInt32(cellValue) > 9999 || Convert.ToInt32(cellValue) < 1)
@@ -657,7 +659,6 @@ namespace MISA.ImportDemo.Core.Services
                     return new DateTime(Convert.ToInt32(cellValue), 1, 1);
                 }
             }
-            //return DateTime.FromOADate((double)cellValue);
 
             var dateString = cellValue.ToString();
             // Ngày tháng phải nhập theo định dạng (ngày/tháng/năm): 
@@ -679,11 +680,7 @@ namespace MISA.ImportDemo.Core.Services
             else if (DateTime.TryParse(cellValue.ToString(), out DateTime dateTime) == true)
             {
                 dateReturn = dateTime;
-            }/*else if (DateTime.Compare(cellValue, minDate) < 0 || DateTime.Compare(cellValue, maxDate) > 0)
-            {
-                entity.ImportValidState = ImportValidState.Invalid;
-                entity.ImportValidError.Add(string.Format("Ngày sinh không hợp lệ", importColumn.ColumnTitle));
-            }*/
+            }
             else
             {
                 entity.ImportValidState = ImportValidState.Invalid;
